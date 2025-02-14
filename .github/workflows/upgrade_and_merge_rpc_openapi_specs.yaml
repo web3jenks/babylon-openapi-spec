@@ -1,0 +1,121 @@
+name: Upgrade and Merge RPC Specifications
+
+# Trigger on successful completion of the Update Swagger Docs workflow
+on:
+  workflow_run:
+    workflows: ["Update Babylon OpenAPI Specs"]
+    types:
+      - completed
+
+jobs:
+  process-specs:
+    # Only proceed if the previous workflow (Update Swagger Docs) was successful
+    # This prevents processing potentially incomplete or corrupted files
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Get the latest version of the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js environment
+      # We need Node.js to run the conversion, validation and merging tools
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'  # Using Node.js 18 for its LTS status and compatibility
+
+      # Step 3: Install required npm packages
+      # These tools are needed for converting and validating OpenAPI specifications
+      # - js-yaml: For parsing YAML files
+      # - api-spec-converter: For converting between Swagger 2.0 and OpenAPI 3.0
+      # - swagger-cli: For validating OpenAPI specifications
+      - name: Install dependencies
+        run: |
+          npm install -g js-yaml api-spec-converter swagger-cli
+          
+      # Step 4: Create directory for processed files
+      # This directory will contain all converted and merged specifications
+      # The -p flag ensures no error if directory already exists
+      - name: Create processed directory
+        run: mkdir -p ./docs/processed
+
+      # Step 5: Upgrade Babylon RPC API specification
+      # Transform the Swagger 2.0 spec to OpenAPI 3.0 format
+      # The -c flag enables validation during conversion
+      - name: Upgrade Babylon RPC API
+        run: |
+          npx api-spec-converter -f swagger_2 -t openapi_3 \
+          ./docs/babylon-rpc-swagger2.yaml > \
+          ./docs/processed/babylon-rpc-openapi3.yaml -c
+        continue-on-error: false  # Stop workflow if conversion fails
+
+      # Step 6: Upgrade Babylon Staking API specification
+      # Similar conversion process for the staking API specification
+      - name: Upgrade Babylon Staking API
+        run: |
+          npx api-spec-converter -f swagger_2 -t openapi_3 \
+          ./docs/babylon-staking-api-swagger2.yaml > \
+          ./docs/processed/babylon-staking-api-openapi3.yaml -c
+        continue-on-error: false
+
+      # Step 7: Validate converted specifications
+      # Ensure both converted specifications are valid OpenAPI 3.0
+      # This catches any issues that might have occurred during conversion
+      - name: Validate converted specifications
+        run: |
+          echo "Validating Babylon RPC API..."
+          npx swagger-cli validate ./docs/processed/babylon-rpc-openapi3.yaml
+          
+          echo "Validating Babylon Staking API..."
+          npx swagger-cli validate ./docs/processed/babylon-staking-api-openapi3.yaml
+        continue-on-error: false
+
+      # Step 8: Merge RPC specifications
+      # Combine the Babylon RPC and CometBFT specifications
+      # Uses a custom merge script (mergeRpcOpenAPIs.js) from the repository root
+      - name: Merge RPC specifications
+        run: |
+          node mergeRpcOpenAPIs.js \
+          ./docs/processed/babylon-rpc-openapi3.yaml \
+          ./docs/cometbft-rpc-openapi.yaml \
+          ./docs/processed/babylon-rpc-openapi3.yaml
+        continue-on-error: false
+
+      # Step 9: Validate merged specification
+      # Ensure the merged specification is still valid OpenAPI 3.0
+      - name: Validate merged specification
+        run: |
+          echo "Validating merged RPC API specification..."
+          npx swagger-cli validate ./docs/processed/babylon-rpc-openapi3.yaml
+        continue-on-error: false
+
+      # Step 10: Clean up temporary files
+      # Remove original Swagger 2.0 files that are no longer needed
+      # Only runs if all previous steps were successful
+      - name: Cleanup original files
+        if: success()
+        run: |
+          rm -f ./docs/processed/babylon-rpc-openapi3.yaml
+
+      # Step 11: Commit and push processed files
+      # Save all processed files back to the repository
+      # Uses the github-actions bot identity for the commit
+      - name: Commit processed files
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ./docs/processed/
+          git commit -m "Process and merge OpenAPI specifications"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}  # Using default GitHub token for authentication
+
+# Notes:
+# 1. The mergeRpcOpenAPIs.js script must exist in the repository root
+# 2. All paths are relative to the repository root
+# 3. The workflow requires write permissions (configured in repository settings)
+# 4. Failure at any step will stop the workflow (continue-on-error: false)
+# 5. GITHUB_TOKEN is automatically provided by GitHub Actions
