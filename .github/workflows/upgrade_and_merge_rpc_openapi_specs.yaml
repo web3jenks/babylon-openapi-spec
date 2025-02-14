@@ -79,7 +79,7 @@ jobs:
         run: |
           node mergeRpcOpenAPIs.js \
           ./docs/processed/babylon-rpc-openapi3.yaml \
-          ./docs/cometbft-rpc-openapi.yaml \
+          ./docs/cometbft-rpc-openapi3.yaml \
           ./docs/processed/babylon-rpc-openapi3.yaml
         continue-on-error: false
 
