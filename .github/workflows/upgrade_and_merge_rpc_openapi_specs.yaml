@@ -50,7 +50,7 @@ jobs:
         run: |
           npx api-spec-converter -f swagger_2 -t openapi_3 \
           ./docs/babylon-rpc-swagger2.yaml > \
-          ./docs/processed/babylon-rpc-openapi3.yaml -c
+          ./docs/processed/babylon-rpc-openapi3.yaml -c -s yaml
         continue-on-error: false  # Stop workflow if conversion fails
 
       # Step 6: Upgrade Babylon Staking API specification
