@@ -59,7 +59,7 @@ jobs:
         run: |
           npx api-spec-converter -f swagger_2 -t openapi_3 \
           ./docs/babylon-staking-api-swagger2.yaml > \
-          ./docs/processed/babylon-staking-api-openapi3.yaml -c
+          ./docs/processed/babylon-staking-api-openapi3.yaml -c -s yaml
         continue-on-error: false
 
       # Step 7: Validate converted specifications
