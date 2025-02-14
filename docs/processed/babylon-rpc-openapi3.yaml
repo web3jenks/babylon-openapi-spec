@@ -21,6 +21,7 @@
             }
           },
           {
+            "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set.",
             "in": "query",
             "name": "pagination.offset",
             "required": false,
