@@ -1,0 +1,104 @@
+# This workflow automatically fetches and updates OpenAPI/Swagger specifications from multiple babylon 
+# repositories, it runs on a weekly schedule and can also be triggered manually through the 
+# GitHub Actions UI
+
+name: Update Babylon OpenAPI Specs
+
+# Workflow triggers
+on:
+  schedule:
+    # Runs weekly on Sunday at midnight UTC
+    # Cron syntax: minute hour day-of-month month day-of-week
+    - cron: '0 0 * * 0'  
+  workflow_dispatch:  # Enables manual trigger via GitHub Actions UI
+  
+jobs:
+  update-swagger:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout the repository where we'll store the OpenAPI specs
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+          
+      # Step 2: Checkout CometBFT repository
+      # Using specific version tag v0.38.17 to ensure stable API documentation
+      - name: Checkout CometBFT repository
+        uses: actions/checkout@v4
+        with:
+          repository: cometbft/cometbft
+          ref: v0.38.17  # Specific version tag of CometBFT as Babylond depends on
+          # see here: https://github.com/babylonlabs-io/babylon/blob/e1a34d1e56f801ec5de63b0982c7eb9c98dbd7d9/go.mod#L8
+          path: cometbft  # Will be checked out to ./cometbft directory
+          token: ${{ secrets.PAT_TOKEN }}  # Required for private repository access
+
+          
+      # Step 3: Checkout Babylon Core repository
+      # Using main branch as source for latest API documentation
+      # In the future we can pull the latest three releases
+      - name: Checkout Babylon repository
+        uses: actions/checkout@v4
+        with:
+          repository: babylonlabs-io/babylon
+          ref: main  # Main branch
+          path: babylon  # Will be checked out to ./babylon directory
+          token: ${{ secrets.PAT_TOKEN }}
+          
+      # Step 4: Checkout Babylon Staking API repository
+      - name: Checkout Staking API repository
+        uses: actions/checkout@v4
+        with:
+          repository: babylonlabs-io/staking-api-service
+          ref: main
+          path: staking-api  # Will be checked out to ./staking-api directory
+          token: ${{ secrets.PAT_TOKEN }}
+          
+      # Step 5: Create directory for storing OpenAPI specifications
+      # This ensures the target directory exists before copying files
+      - name: Create docs directory
+        run: mkdir -p docs
+          
+      # Step 6: Copy OpenAPI specification files from source repositories
+      # Each file is copied to the docs directory with a specific naming convention
+      - name: Copy OpenAPI files
+        run: |
+          # CometBFT RPC API specification
+          # Source: openapi.yaml from rpc/openapi directory
+          cp cometbft/rpc/openapi/openapi.yaml docs/cometbft-rpc-openapi.yaml
+          
+          # Babylon RPC API specification
+          # Source: swagger.yaml from client/docs/swagger-ui directory
+          cp babylon/client/docs/swagger-ui/swagger.yaml docs/babylon-rpc-openapi.yaml
+          
+          # Babylon Staking API specification
+          # Source: swagger.yaml from docs directory
+          cp staking-api/docs/swagger.yaml docs/babylon-staking-api-openapi.yaml
+          
+      # Step 7: Check if any files were changed
+      # This step sets an output variable that's used to determine if we need to commit
+      - name: Check for changes
+        id: check-changes
+        run: |
+          git status --porcelain  # Shows modified files in machine-readable format
+          echo "changes=$(git status --porcelain | wc -l)" >> $GITHUB_OUTPUT
+          
+      # Step 8: Commit and push changes if any files were updated
+      # Only runs if the check-changes step detected modifications
+      - name: Commit and push if changed
+        if: steps.check-changes.outputs.changes > 0
+        run: |
+          # Configure git user for commit
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          
+          # Stage and commit all changes in docs directory
+          git add docs/
+          git commit -m "Update OpenAPI specifications [skip ci]"
+          
+          # Push changes back to the repository
+          git push
+
+# Required repository secrets:
+# - PAT_TOKEN: Personal Access Token with `repo` scope for accessing private repositories
+#   To create: GitHub Settings -> Developer settings -> Personal access tokens -> Generate new token
+#   To add: Repository Settings -> Secrets and variables -> Actions -> New repository secret
