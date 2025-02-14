@@ -8,109 +8,102 @@ on:
   workflow_dispatch:  # Enables manual trigger via GitHub Actions UI
 
 jobs:
-  update-swagger:
+  process-specs:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     
+    # Add permissions block to explicitly set token permissions
+    permissions:
+      contents: write
+      
     steps:
-      # Step 1: Checkout the target repository
-      - name: Checkout target repository
+      # Step 1: Get the latest version of the repository
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT_TOKEN }}
-          
-      # Step 2: Clean workspace before processing
-      # This ensures no leftover files from previous runs or manual deletions
-      - name: Clean workspace
-        run: |
-          # Remove existing docs directory if it exists
-          rm -rf docs
-          # Remove any existing checked out repositories
-          rm -rf cometbft babylon staking-api
-          
-      # Step 3: Create fresh docs directory
-      - name: Create docs directory
-        run: mkdir -p docs
-          
-      # Step 4: Checkout CometBFT repository
-      - name: Checkout CometBFT repository
-        uses: actions/checkout@v4
+          token: ${{ secrets.PAT_TOKEN }}  # Use PAT_TOKEN for checkout
+
+      # Step 2: Set up Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          repository: cometbft/cometbft
-          ref: v0.38.17
-          path: cometbft
-          token: ${{ secrets.PAT_TOKEN }}
-          
-      # Step 5: Checkout Babylon Core repository
-      - name: Checkout Babylon repository
-        uses: actions/checkout@v4
-        with:
-          repository: babylonlabs-io/babylon
-          ref: main
-          path: babylon
-          token: ${{ secrets.PAT_TOKEN }}
-          
-      # Step 6: Checkout Babylon Staking API repository
-      - name: Checkout Staking API repository
-        uses: actions/checkout@v4
-        with:
-          repository: babylonlabs-io/staking-api-service
-          ref: main
-          path: staking-api
-          token: ${{ secrets.PAT_TOKEN }}
-          
-      # Step 7: Copy OpenAPI files with error handling
-      - name: Copy OpenAPI files
+          node-version: '18'
+
+      # Step 3: Install required npm packages
+      - name: Install dependencies
         run: |
-          # Function to safely copy files with error checking
-          safe_copy() {
-            if [ -f "$1" ]; then
-              cp "$1" "$2"
-              echo "Successfully copied $1 to $2"
-            else
-              echo "Warning: Source file $1 not found"
-              exit 1
-            fi
-          }
+          npm install -g js-yaml api-spec-converter swagger-cli
           
-          # Copy each specification file with error checking
-          safe_copy "cometbft/rpc/openapi/openapi.yaml" "docs/cometbft-rpc-openapi3.yaml"
-          safe_copy "babylon/client/docs/swagger-ui/swagger.yaml" "docs/babylon-rpc-swagger2.yaml"
-          safe_copy "staking-api/docs/swagger.yaml" "docs/babylon-staking-api-swagger2.yaml"
-          
-      # Step 8: Verify files exist before committing
-      - name: Verify files
+      # Step 4: Create processed directory
+      - name: Create processed directory
+        run: mkdir -p ./docs/processed
+
+      # Step 5: Upgrade Babylon RPC API specification
+      - name: Upgrade Babylon RPC API
         run: |
-          required_files=(
-            "docs/cometbft-rpc-openapi3.yaml"
-            "docs/babylon-rpc-swagger2.yaml"
-            "docs/babylon-staking-api-swagger2.yaml"
-          )
-          
-          for file in "${required_files[@]}"; do
-            if [ ! -f "$file" ]; then
-              echo "Error: Required file $file is missing"
-              exit 1
-            fi
-          done
-          
-      # Step 9: Commit and push changes
-      - name: Commit and push changes
+          npx api-spec-converter -f swagger_2 -t openapi_3 \
+          ./docs/babylon-rpc-swagger2.yaml > \
+          ./docs/processed/babylon-rpc-openapi3.yaml -c
+        continue-on-error: false
+
+      # Step 6: Upgrade Babylon Staking API specification
+      - name: Upgrade Babylon Staking API
         run: |
-          # Configure git user for commit
+          npx api-spec-converter -f swagger_2 -t openapi_3 \
+          ./docs/babylon-staking-api-swagger2.yaml > \
+          ./docs/processed/babylon-staking-api-openapi3.yaml -c
+        continue-on-error: false
+
+      # Step 7: Validate converted specifications
+      - name: Validate converted specifications
+        run: |
+          echo "Validating Babylon RPC API..."
+          npx swagger-cli validate ./docs/processed/babylon-rpc-openapi3.yaml
+          
+          echo "Validating Babylon Staking API..."
+          npx swagger-cli validate ./docs/processed/babylon-staking-api-openapi3.yaml
+        continue-on-error: false
+
+      # Step 8: Merge RPC specifications
+      - name: Merge RPC specifications
+        run: |
+          node mergeRpcOpenAPIs.js \
+          ./docs/processed/babylon-rpc-openapi3.yaml \
+          ./docs/cometbft-rpc-openapi.yaml \
+          ./docs/processed/babylon-rpc-openapi3.yaml
+        continue-on-error: false
+
+      # Step 9: Validate merged specification
+      - name: Validate merged specification
+        run: |
+          echo "Validating merged RPC API specification..."
+          npx swagger-cli validate ./docs/processed/babylon-rpc-openapi3.yaml
+        continue-on-error: false
+
+      # Step 10: Clean up temporary files
+      - name: Cleanup original files
+        if: success()
+        run: |
+          rm -f ./docs/processed/babylon-rpc-openapi3.yaml
+
+      # Step 11: Commit and push processed files
+      - name: Commit processed files
+        if: success()
+        run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           
-          # Stage all files in docs directory
-          git add docs/
-          
           # Check if there are changes to commit
-          if git diff --staged --quiet; then
+          if git diff --staged --quiet && git diff --quiet; then
             echo "No changes to commit"
             exit 0
-          else
-            git commit -m "Update OpenAPI specifications [skip ci]"
-            git push
           fi
+          
+          git add ./docs/processed/
+          git commit -m "Process and merge OpenAPI specifications"
+          git push origin HEAD:main
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}  # Use PAT_TOKEN consistently
 
 # Required repository secrets:
 # - PAT_TOKEN: Personal Access Token with `repo` scope for accessing private repositories
