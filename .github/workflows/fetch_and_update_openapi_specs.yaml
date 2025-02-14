@@ -66,15 +66,15 @@ jobs:
         run: |
           # CometBFT RPC API specification
           # Source: openapi.yaml from rpc/openapi directory
-          cp cometbft/rpc/openapi/openapi.yaml docs/cometbft-rpc-openapi.yaml
+          cp cometbft/rpc/openapi/openapi.yaml docs/cometbft-rpc-openapi3.yaml
           
           # Babylon RPC API specification
           # Source: swagger.yaml from client/docs/swagger-ui directory
-          cp babylon/client/docs/swagger-ui/swagger.yaml docs/babylon-rpc-openapi.yaml
+          cp babylon/client/docs/swagger-ui/swagger.yaml docs/babylon-rpc-swagger2.yaml
           
           # Babylon Staking API specification
           # Source: swagger.yaml from docs directory
-          cp staking-api/docs/swagger.yaml docs/babylon-staking-api-openapi.yaml
+          cp staking-api/docs/swagger.yaml docs/babylon-staking-api-swagger2.yaml
           
       # Step 7: Check if any files were changed
       # This step sets an output variable that's used to determine if we need to commit
