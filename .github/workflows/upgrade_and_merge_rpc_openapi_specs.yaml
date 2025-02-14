@@ -82,7 +82,7 @@ jobs:
           node mergeRpcOpenAPIs.js \
           ./docs/processed/babylon-rpc-openapi3.yaml \
           ./docs/cometbft-rpc-openapi3.yaml \
-          ./docs/processed/babylon-rpc-openapi3.yaml
+          ./docs/processed/babylon-merged-rpc-openapi3.yaml
         continue-on-error: false
 
       # Step 9: Validate merged specification
