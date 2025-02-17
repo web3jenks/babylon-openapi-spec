@@ -1,0 +1,45 @@
+name: Generate Redocly Docs
+
+on:
+  workflow_run:
+    workflows: ["Upgrade and Merge RPC Specifications"]
+    types:
+      - completed
+
+jobs:
+  generate-docs:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Redocly CLI
+        run: npm install -g @redocly/cli
+
+      - name: Generate Babylon RPC documentation
+        run: |
+          npx redocly build-docs ./docs/processed/babylon-merged-rpc-openapi3.yaml -o ./docs/build/babylon-rpc/index.html
+
+      - name: Generate Babylon Staking API documentation
+        run: |
+          npx redocly build-docs ./docs/processed/babylon-staking-api-openapi3.yaml -o ./docs/build/babylon-staking/index.html
+
+      - name: Commit and push documentation
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ./docs/build/babylon-rpc/index.html ./docs/build/babylon-staking/index.html
+          git commit -m "Generate Redocly documentation"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }} 
