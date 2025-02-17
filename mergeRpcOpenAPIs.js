@@ -1,5 +1,3 @@
-
-
 const fs = require('fs');
 const yaml = require('js-yaml');
 
@@ -20,8 +18,11 @@ function mergeOpenAPI(file1, file2, outputFile) {
             }
         };
 
-        // Merge servers
-        const mergedServers = [...(spec1.servers || []), ...(spec2.servers || [])];
+        // Merge servers - replace with custom server
+        const customServer = [{
+            url: 'http://localhost:9090',
+            description: 'Local Babylon gRPC Gateway. Default port is 9090.'
+        }];
 
         // Create merged OpenAPI spec
         const mergedSpec = {
@@ -70,7 +71,7 @@ function mergeOpenAPI(file1, file2, outputFile) {
                 "echo '{ "jsonrpc": "2.0","method": "subscribe","id": 0,"params": {"query": "tm.event='"'NewBlock'"'"} }' | websocat -n -t ws://127.0.0.1:26657/websocket"
                 `,
             },
-            servers: mergedServers,
+            servers: customServer,  // Use custom server instead of mergedServers
             paths: mergedPaths,
             components: mergedComponents,
         };
