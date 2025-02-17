@@ -36,7 +36,10 @@ jobs:
       - name: Install dependencies
         run: |
           npm install -g js-yaml api-spec-converter swagger-cli
-          
+
+      - name: Install local dependencies
+        run: |
+          npm install js-yaml api-spec-converter swagger-cli
       # Step 4: Create directory for processed files
       # This directory will contain all converted and merged specifications
       # The -p flag ensures no error if directory already exists
