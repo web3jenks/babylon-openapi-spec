@@ -2,47 +2,65 @@ openapi: 3.0.0
 info:
   title: Babylon gRPC API Docs
   version: 1.0.0
-  description: |-
-    |
-                    A Babylon gRPC Gateway is a REST interface for Babylon's gRPC. 
-                    This is a merged specification of the Babylon gRPC Gateway and 
-                    the CometBFT RPC.
-                    
-                    Supported RPC protocols:
+  description: >
+    A Babylon gRPC Gateway is a REST interface for Babylon's gRPC.
 
-                    * URI over HTTP
-                    * JSONRPC over HTTP
-                    * JSONRPC over websockets
-                    
-                    ## Configuration
+    This is a merged specification of the Babylon gRPC Gateway and the CometBFT
+    RPC.
 
-                    RPC can be configured by tuning parameters under "[rpc]" table in the
-                    "$CMTHOME/config/config.toml" file or by using the "--rpc.X" command-line
-                    flags.
 
-                    The default RPC listen address is "tcp://127.0.0.1:26657".
-                    
-                    ## URI/HTTP
+    **Supported RPC protocols:**
 
-                    A REST like interface. "curl localhost:26657/block?height=5"
+    *   URI over HTTP
 
-                    ## JSONRPC/HTTP
+    *   JSONRPC over HTTP
 
-                    JSONRPC requests can be POST'd to the root RPC endpoint via HTTP.
-                    "curl --header "Content-Type: application/json" --request POST --data '{"method": "block", "params": ["5"], "id": 1}' localhost:26657"
+    *   JSONRPC over websockets
 
-                    ## JSONRPC/websockets
+    ## Configuration
 
-                    JSONRPC requests can be also made via websocket.
-                    The websocket endpoint is at "/websocket", e.g. "localhost:26657/websocket".
-                    Asynchronous RPC functions like event "subscribe" and "unsubscribe" are
-                    only available via websockets.
+    RPC can be configured by tuning parameters under "[rpc]" table in the
 
-                    For example using the [websocat](https://github.com/vi/websocat) tool, you can subscribe for 'NewBlock' events
-                    with the following command:
+    `$CMTHOME/config/config.toml` file or by using the `--rpc.X` command-line
 
-                    "echo '{ "jsonrpc": "2.0","method": "subscribe","id": 0,"params": {"query": "tm.event='"'NewBlock'"'"} }' | websocat -n -t ws://127.0.0.1:26657/websocket"
-                    
+    flags.
+
+    The default RPC listen address is `tcp://127.0.0.1:26657`.
+
+
+    ## URI/HTTP
+
+    A REST like interface. `curl localhost:26657/block?height=5`
+
+
+    ## JSONRPC/HTTP
+
+    JSONRPC requests can be POST'd to the root RPC endpoint via HTTP.
+
+    `curl --header "Content-Type: application/json" --request POST --data
+    '{"method": "block", "params": ["5"], "id": 1}' localhost:26657`
+
+
+    ## JSONRPC/websockets
+
+    JSONRPC requests can be also made via websocket.
+
+    The websocket endpoint is at `/websocket`, e.g. `localhost:26657/websocket`.
+
+    Asynchronous RPC functions like event "subscribe" and "unsubscribe" are
+
+    only available via websockets.
+
+
+    For example using the [websocat](https://github.com/vi/websocat) tool, you
+    can subscribe for 'NewBlock' events
+
+    with the following command:
+
+
+    `echo '{ "jsonrpc": "2.0","method": "subscribe","id": 0,"params": {"query":
+    "tm.event='"'NewBlock'"'"} }' | websocat -n -t
+    ws://127.0.0.1:26657/websocket`
 servers:
   - url: http://localhost:9090
     description: Run Babylon gRPC Gateway locally with default port 9090.
@@ -16521,7 +16539,7 @@ paths:
         Returns with the response from CheckTx. Does not wait for DeliverTx
         result.
       tags:
-        - Babylon
+        - CometBFT
       operationId: broadcast_tx_sync
       description: >
         If you want to be sure that the transaction is included in a block, you
@@ -16582,7 +16600,7 @@ paths:
         Returns right away, with no response. Does not wait for CheckTx nor
         DeliverTx results.
       tags:
-        - Babylon
+        - CometBFT
       operationId: broadcast_tx_async
       description: >
         If you want to be sure that the transaction is included in a block, you
@@ -16642,7 +16660,7 @@ paths:
     get:
       summary: Returns with the responses from CheckTx and DeliverTx.
       tags:
-        - Babylon
+        - CometBFT
       operationId: broadcast_tx_commit
       description: >
         IMPORTANT: use only for testing and development. In production, use
@@ -16695,7 +16713,7 @@ paths:
     get:
       summary: Checks the transaction without executing it.
       tags:
-        - Babylon
+        - CometBFT
       operationId: check_tx
       description: >
         The transaction won't be added to the mempool.
@@ -16735,7 +16753,7 @@ paths:
     get:
       summary: Node heartbeat
       tags:
-        - Babylon
+        - CometBFT
       operationId: health
       description: >
         Get node health. Returns empty result (200 OK) on success, no response -
@@ -16758,7 +16776,7 @@ paths:
       summary: Node Status
       operationId: status
       tags:
-        - Babylon
+        - CometBFT
       description: >
         Get CometBFT status including node info, pubkey, latest block hash, app
         hash, block height and time.
@@ -16780,7 +16798,7 @@ paths:
       summary: Network information
       operationId: net_info
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get network info.
       responses:
@@ -16801,7 +16819,7 @@ paths:
       summary: Dial Seeds (Unsafe)
       operationId: dial_seeds
       tags:
-        - Babylon
+        - CometBFT
       description: >
         Dial a peer, this route in under unsafe, and has to manually enabled to
         use
@@ -16834,7 +16852,7 @@ paths:
       summary: Add Peers/Persistent Peers (unsafe)
       operationId: dial_peers
       tags:
-        - Babylon
+        - CometBFT
       description: >
         Set a persistent peer, this route in under unsafe, and has to manually
         enabled to use.
@@ -16900,7 +16918,7 @@ paths:
             type: integer
             example: 2
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get block headers for minHeight <= height <= maxHeight.
 
@@ -16936,7 +16954,7 @@ paths:
             height to return. If no height is provided, it will fetch the latest
             header.
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get Header.
 
@@ -16968,7 +16986,7 @@ paths:
             type: string
             example: '0xD70952032620CC4E2737EB8AC379806359D8E0B17B0488F627997A0B043ABDED'
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get Header By Hash.
 
@@ -17002,7 +17020,7 @@ paths:
             height to return. If no height is provided, it will fetch the latest
             block.
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get Block.
 
@@ -17034,7 +17052,7 @@ paths:
             type: string
             example: '0xD70952032620CC4E2737EB8AC379806359D8E0B17B0488F627997A0B043ABDED'
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get Block By Hash.
 
@@ -17068,7 +17086,7 @@ paths:
             default: 0
             example: 1
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get block_results.
 
@@ -17102,7 +17120,7 @@ paths:
             default: 0
             example: 1
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get Commit.
 
@@ -17158,7 +17176,7 @@ paths:
             example: 30
             default: 30
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get Validators. Validators are sorted first by voting power
         (descending), then by address (ascending).
@@ -17183,7 +17201,7 @@ paths:
       summary: Get Genesis
       operationId: genesis
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get genesis.
 
@@ -17207,7 +17225,7 @@ paths:
       summary: Get Genesis in multiple chunks
       operationId: genesis_chunked
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get genesis document in multiple chunks to make it easier to iterate
         through larger genesis structures. Each chunk is produced by converting
@@ -17242,7 +17260,7 @@ paths:
       summary: Get consensus state
       operationId: dump_consensus_state
       tags:
-        - Babylon
+        - CometBFT
       description: >
         Get consensus state.
 
@@ -17273,7 +17291,7 @@ paths:
       summary: Get consensus state
       operationId: consensus_state
       tags:
-        - Babylon
+        - CometBFT
       description: >
         Get consensus state.
 
@@ -17308,7 +17326,7 @@ paths:
             default: 0
             example: 1
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get consensus parameters.
 
@@ -17341,7 +17359,7 @@ paths:
             default: 30
             example: 1
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get list of unconfirmed transactions
       responses:
@@ -17362,7 +17380,7 @@ paths:
       summary: Get data about unconfirmed transactions
       operationId: num_unconfirmed_txs
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get data about unconfirmed transactions
       responses:
@@ -17429,7 +17447,7 @@ paths:
             default: asc
             example: asc
       tags:
-        - Babylon
+        - CometBFT
       responses:
         '200':
           description: List of unconfirmed transactions
@@ -17486,7 +17504,7 @@ paths:
             default: desc
             example: asc
       tags:
-        - Babylon
+        - CometBFT
       responses:
         '200':
           description: List of paginated blocks matching the search criteria.
@@ -17521,7 +17539,7 @@ paths:
             example: true
             default: false
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get a transaction
 
@@ -17545,7 +17563,7 @@ paths:
       summary: Get info about the application.
       operationId: abci_info
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Get info about the application.
 
@@ -17600,7 +17618,7 @@ paths:
             example: true
             default: false
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Query the application for some information.
       responses:
@@ -17629,7 +17647,7 @@ paths:
             type: string
             example: JSON_EVIDENCE_encoded
       tags:
-        - Babylon
+        - CometBFT
       description: |
         Broadcast evidence of the misbehavior.
       responses:

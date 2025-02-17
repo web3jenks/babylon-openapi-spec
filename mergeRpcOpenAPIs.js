@@ -30,46 +30,37 @@ function mergeOpenAPI(file1, file2, outputFile) {
             info: {
                 title: "Babylon gRPC API Docs",
                 version: "1.0.0",
-                description: `|
-                A Babylon gRPC Gateway is a REST interface for Babylon's gRPC. 
-                This is a merged specification of the Babylon gRPC Gateway and 
-                the CometBFT RPC.
-                
-                Supported RPC protocols:
+                description: `A Babylon gRPC Gateway is a REST interface for Babylon's gRPC.
+This is a merged specification of the Babylon gRPC Gateway and the CometBFT RPC.
 
-                * URI over HTTP
-                * JSONRPC over HTTP
-                * JSONRPC over websockets
-                
-                ## Configuration
+**Supported RPC protocols:**
+*   URI over HTTP
+*   JSONRPC over HTTP
+*   JSONRPC over websockets
+## Configuration
+RPC can be configured by tuning parameters under "[rpc]" table in the
+\`$CMTHOME/config/config.toml\` file or by using the \`--rpc.X\` command-line
+flags.
+The default RPC listen address is \`tcp://127.0.0.1:26657\`.
 
-                RPC can be configured by tuning parameters under "[rpc]" table in the
-                "$CMTHOME/config/config.toml" file or by using the "--rpc.X" command-line
-                flags.
+## URI/HTTP
+A REST like interface. \`curl localhost:26657/block?height=5\`
 
-                The default RPC listen address is "tcp://127.0.0.1:26657".
-                
-                ## URI/HTTP
+## JSONRPC/HTTP
+JSONRPC requests can be POST'd to the root RPC endpoint via HTTP.
+\`curl --header "Content-Type: application/json" --request POST --data '{"method": "block", "params": ["5"], "id": 1}' localhost:26657\`
 
-                A REST like interface. "curl localhost:26657/block?height=5"
+## JSONRPC/websockets
+JSONRPC requests can be also made via websocket.
+The websocket endpoint is at \`/websocket\`, e.g. \`localhost:26657/websocket\`.
+Asynchronous RPC functions like event "subscribe" and "unsubscribe" are
+only available via websockets.
 
-                ## JSONRPC/HTTP
+For example using the [websocat](https://github.com/vi/websocat) tool, you can subscribe for 'NewBlock' events
+with the following command:
 
-                JSONRPC requests can be POST'd to the root RPC endpoint via HTTP.
-                "curl --header "Content-Type: application/json" --request POST --data '{"method": "block", "params": ["5"], "id": 1}' localhost:26657"
-
-                ## JSONRPC/websockets
-
-                JSONRPC requests can be also made via websocket.
-                The websocket endpoint is at "/websocket", e.g. "localhost:26657/websocket".
-                Asynchronous RPC functions like event "subscribe" and "unsubscribe" are
-                only available via websockets.
-
-                For example using the [websocat](https://github.com/vi/websocat) tool, you can subscribe for 'NewBlock' events
-                with the following command:
-
-                "echo '{ "jsonrpc": "2.0","method": "subscribe","id": 0,"params": {"query": "tm.event='"'NewBlock'"'"} }' | websocat -n -t ws://127.0.0.1:26657/websocket"
-                `,
+\`echo '{ "jsonrpc": "2.0","method": "subscribe","id": 0,"params": {"query": "tm.event='"'NewBlock'"'"} }' | websocat -n -t ws://127.0.0.1:26657/websocket\`
+`,
             },
             servers: customServer,  // Use custom server instead of mergedServers
             paths: mergedPaths,
@@ -79,8 +70,10 @@ function mergeOpenAPI(file1, file2, outputFile) {
         // Replace tags of the Babylon RPC API with "Babylon RPC"
         Object.keys(mergedPaths).forEach(key => {
             const path = mergedPaths[key];
-            if (path?.get?.tags) {
+            if (path?.get?.tags == "Query") {
                 path.get.tags[0] = 'Babylon';
+            } else if (path?.get?.tags) {
+                path.get.tags[0] = "CometBFT";
             }
         });
 
