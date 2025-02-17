@@ -5,7 +5,7 @@ on:
     workflows: ["Upgrade and Merge RPC Specifications"]
     types:
       - completed
-    workflow_dispatch:  # Enables manual trigger via GitHub Actions UI
+  workflow_dispatch:  # Enables manual trigger via GitHub Actions UI
 
 jobs:
   generate-docs:
