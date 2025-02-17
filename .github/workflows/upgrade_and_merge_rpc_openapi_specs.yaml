@@ -6,7 +6,6 @@ on:
     workflows: ["Update Babylon OpenAPI Specs"]
     types:
       - completed
-    workflow_dispatch:  # Enables manual trigger via GitHub Actions UI
 
 jobs:
   process-specs:
