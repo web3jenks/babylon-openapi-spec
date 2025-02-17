@@ -21,7 +21,7 @@ function mergeOpenAPI(file1, file2, outputFile) {
         // Merge servers - replace with custom server
         const customServer = [{
             url: 'http://localhost:9090',
-            description: 'Local Babylon gRPC Gateway. Default port is 9090.'
+            description: 'Run Babylon gRPC Gateway locally with default port 9090.'
         }];
 
         // Create merged OpenAPI spec
@@ -75,6 +75,15 @@ function mergeOpenAPI(file1, file2, outputFile) {
             paths: mergedPaths,
             components: mergedComponents,
         };
+
+        // Replace tags of the Babylon RPC API with "Babylon RPC"
+        Object.keys(mergedPaths).forEach(key => {
+            const path = mergedPaths[key];
+            if (path?.get?.tags) {
+                path.get.tags[0] = 'Babylon';
+            }
+        });
+
 
         // Write to output file
         fs.writeFileSync(outputFile, yaml.dump(mergedSpec), 'utf8');
