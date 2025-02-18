@@ -37,20 +37,21 @@ This is a merged specification of the Babylon gRPC Gateway and the CometBFT RPC.
 *   URI over HTTP
 *   JSONRPC over HTTP
 *   JSONRPC over websockets
-## Configuration
+
+**Configuration**
 RPC can be configured by tuning parameters under "[rpc]" table in the
 \`$CMTHOME/config/config.toml\` file or by using the \`--rpc.X\` command-line
 flags.
 The default RPC listen address is \`tcp://127.0.0.1:26657\`.
 
-## URI/HTTP
+**URI/HTTP**
 A REST like interface. \`curl localhost:26657/block?height=5\`
 
-## JSONRPC/HTTP
+**JSONRPC/HTTP**
 JSONRPC requests can be POST'd to the root RPC endpoint via HTTP.
 \`curl --header "Content-Type: application/json" --request POST --data '{"method": "block", "params": ["5"], "id": 1}' localhost:26657\`
 
-## JSONRPC/websockets
+**JSONRPC/websockets**
 JSONRPC requests can be also made via websocket.
 The websocket endpoint is at \`/websocket\`, e.g. \`localhost:26657/websocket\`.
 Asynchronous RPC functions like event "subscribe" and "unsubscribe" are
