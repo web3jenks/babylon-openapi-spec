@@ -15,6 +15,13 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+      # Skip workflow if triggered by bot user, this prevents infinite loops
+      - name: Skip workflow if triggered by bot user
+        if: ${{ github.actor == 'github-actions[bot]' }}
+        run: |
+          echo "Workflow triggered by bot user, skipping."
+          exit 0
+        
       # Step 1: Checkout the target repository
       - name: Checkout target repository
         uses: actions/checkout@v4
