@@ -99,10 +99,10 @@ jobs:
       # Step 10: Clean up temporary files
       # Remove original Swagger 2.0 files that are no longer needed
       # Only runs if all previous steps were successful
-      - name: Cleanup original files
-        if: success()
-        run: |
-          rm -f ./docs/processed/babylon-rpc-openapi3.yaml
+      # - name: Cleanup original files
+      #   if: success()
+      #   run: |
+      #     rm -f ./docs/processed/babylon-rpc-openapi3.yaml
 
       # Step 11: Commit and push processed files
       # Save all processed files back to the repository
